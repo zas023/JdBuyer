@@ -528,7 +528,7 @@ if __name__ == '__main__':
 
     # sku_ids = '100015253059,100015253079,100015253061'  # 商品id
     sku_ids = '100015253061'  # 商品id
-    area = '1_2901_4135'  # 区域id
+    area_id = '1_2901_4135'  # 区域id
     buyer = Buyer()  # 初始化
     buyer.login_by_QRcode()
-    buyer.buy_item_in_stock(sku_id=sku_ids, area_id=area, stock_interval=1)
+    buyer.buy_item_in_stock(sku_id=sku_ids, area_id=area_id, stock_interval=1)

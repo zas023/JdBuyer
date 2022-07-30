@@ -3,11 +3,17 @@
 ## 关于作者
 [![CoderZhou's GitHub stats](https://github-readme-stats.vercel.app/api?username=zas023&show_icons=true&count_private=true&theme=vue)](https://github.com/zas023)
 
-## 关于项目
+## 1 关于项目
 
-该项目处于初级学习阶段，还需要进行简单的手动配置即可食用。
+这是一个京东小工具，如果你想在京东上购买的商品无货时，小助手可以帮助你全天候监听商品库存，并在有货时第一时间自动尝试下单，且下单成功后支持微信通知触达。
 
-### 食用教程
+📢注意：由于货源有限，监听到货源后并不能保证一定下单成功，只能保证让你和全国黄牛站在同一起跑线上，剩下的交给奇迹。
+
+## 2 食用教程
+
+目前该项目支持两种 **Shell 脚本** 和 **GUI 图形界面** 两种运行模式，目前 Shell 模式支持日志和微信通知，但还需一些额外配置，可根据自身条件选择启动方式。
+
+### 2.1 Shell 脚本
 
 1. 安装运行环境
 
@@ -32,10 +38,43 @@ pip install -r requirements.txt
 python JdBuyer.py
 ```
 
-### Todo
+### 2.2 GUI 图形界面
+
+目前可支持 windows 和 macos，请到 [release](https://github.com/zas023/JdBuyer/releases) 下载对于文件：
+
+- windwos 下载 JdBuyerApp.zip，解压后双击运行其中可执行文件即可；
+
+- macos 下载 JdBuyerApp.app，下载后直接双击运行即可。
+
+**1. 如何配置**
+
+运行程序后，可以看到一共有一下五个配置：
+![](./assest/shootscreen.mac.png)
+
+|参数名称|是否必填|说明|
+|--|--|--|
+|商品SKU|是|京东商品详情页链接中可以找到,<br>如 https://item.jd.com/100015253061.html|
+|地区ID|是|下单地址所在的地区,<br>可以在工程 [area_id](./area_id) 文件夹中找到|
+|购买商品数量|是|默认1|
+|库存查询间隔|是|监听库存的时间间隔，默认3秒|
+|支付密码|否|如需使用虚拟资产，如京豆、E卡等|
+
+*注：所有配置均只会保存本地。*
+
+**2. 如何运行**
+
+当完成以上配置后，点击【开始】按钮即可，如果当前是未登陆状态，会自动弹出登陆二维码等待你打开京东APP扫码登录，登陆成功后会自动开始执行任务。
+
+*注：如长时间未登录提示二维码过期，点击【结束】按钮，重新【开始】即可。*
+
+### 2.3 视频教程
+
+[传送门](https://www.bilibili.com/video/BV1xF411K7nt?vd_source=26dbffac58b770ac34510d2ac30d229d)
+
+## 3 Todo
 - [x] 支持扫码登陆
 - [ ] 登陆状态保活
-- [ ] 开发图形界面
+- [x] 开发图形界面
 
 # 免责声明
 

@@ -3,7 +3,7 @@ import os
 import time
 import json
 
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, QThread, Signal, QDateTime
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QWidget,
@@ -12,9 +12,11 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QSlider,
     QPushButton,
-    QGridLayout
+    QGridLayout,
+    QDateTimeEdit
 )
 
+from timer import Timer
 from JdSession import Session
 
 NUM_LABEL_FORMAT = '商品购买数量[{0}]个'
@@ -100,6 +102,13 @@ class JdBuyerUI(QWidget):
         grid.addWidget(passwordLabel, 3, 0)
         grid.addWidget(self.passwordEdit, 3, 1)
 
+        # 开始时间
+        buyTimeLabel = QLabel('定时开始执行时间')
+        self.buyTimeEdit = QDateTimeEdit(QDateTime.currentDateTime(), self)
+        self.buyTimeEdit.setDisplayFormat("yyyy-MM-dd HH:mm:ss")
+        grid.addWidget(buyTimeLabel, 3, 3)
+        grid.addWidget(self.buyTimeEdit, 3, 4)
+
         # 二维码
         self.qrLabel = QLabel()
         grid.addWidget(self.qrLabel, 4, 0, 1, 2)
@@ -133,6 +142,7 @@ class JdBuyerUI(QWidget):
             self.qrLogin()
             self.infoLabel.setText('请使用京东扫码登录')
             return
+        self.config['buyTime'] = self.buyTimeEdit.text()
         self.config['skuId'] = self.skuEdit.text()
         self.config['areaId'] = self.areaEdit.text()
         self.saveData()
@@ -266,11 +276,17 @@ class BuyerThread(QThread):
         area_id = self.taskParam.get('areaId')
         count = self.taskParam.get('count')
         stock_interval = self.taskParam.get('stockInterval')
+        buyTime = self.taskParam.get('buyTime')
 
         self.session.item_details[sku_id] = self.session._get_item_detail(
             sku_id)
         submit_retry = 3
         submit_interval = 5
+
+        timer = Timer(buyTime)
+        self.info_signal.emit('定时中，将于 {0} 开始执行'.format(buyTime))
+        timer.start()
+
         while True:
             if self._isPause:
                 self.info_signal.emit('{0} 已取消下单'.format(

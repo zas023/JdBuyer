@@ -281,11 +281,13 @@ class BuyerThread(QThread):
                     time.strftime(DATA_FORMAT, time.localtime()), stock_interval))
             else:
                 self.info_signal.emit('{0} 满足下单条件，开始执行'.format(sku_id))
-                self.session.clear_cart()
-                self.session.add_item_to_cart(sku_id, count)
-                if self.session.submit_order_with_retry(submit_retry, submit_interval):
-                    self.info_signal.emit('下单成功')
-                    return
+                if not self.session.prepareCart(sku_id, count, area_id):
+                    self.info_signal.emit('{0} 加入购物车失败，{1}s后进行下一次查询'.format(
+                    time.strftime(DATA_FORMAT, time.localtime()), stock_interval))
+                else :
+                    if self.session.submit_order_with_retry(submit_retry, submit_interval):
+                        self.info_signal.emit('下单成功')
+                        return
             time.sleep(stock_interval)
 
 

@@ -213,70 +213,122 @@ class Session(object):
             return False
 
     ############## 购物车相关 #############
-    def _cancel_select_all_cart_item(self):
-        """取消勾选购物车中的所有商品
-        :return: 取消勾选结果 True/False
-        """
-        url = "https://cart.jd.com/cancelAllItem.action"
-        data = {
-            't': 0,
-            'outSkus': '',
-            'random': random.random()
-            # 'locationId' can be ignored
-        }
-        resp = self.sess.post(url, data=data)
-        return self.response_status(resp)
 
-    def add_item_to_cart(self, sku_id, count=1):
-        """添加商品到购物车
-        :param sku_ids
-        :param 商品数量
-        :return:
+    def uncheckCartAll(self):
+        """ 取消所有选中商品
+        return 购物车信息
         """
-        url = 'https://cart.jd.com/gate.action'
+        url = 'https://api.m.jd.com/api'
+
         headers = {
             'User-Agent': self.user_agent,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'origin': 'https://cart.jd.com',
+            'referer': 'https://cart.jd.com'
         }
 
-        payload = {
-            'pid': sku_id,
-            'pcount': count,
-            'ptype': 1,
-        }
-        resp = self.sess.get(url=url, params=payload, headers=headers)
-        if 'https://cart.jd.com/cart.action' in resp.url:  # 套装商品加入购物车后直接跳转到购物车页面
-            return
-        else:  # 普通商品成功加入购物车后会跳转到提示 "商品已成功加入购物车！" 页面
-            html = etree.HTML(resp.text)
-            result = html.xpath('//h3[@class="ftx-02"]')[0].text
-            # [<h3 class="ftx-02">商品已成功加入购物车！</h3>]
-            if result == '商品已成功加入购物车！':
-                return
-            else:
-                return
-
-    def clear_cart(self):
-        """清空购物车
-        :return: 清空购物车结果 True/False
-        """
-        # 1.select all items  2.batch remove items
-        select_url = 'https://cart.jd.com/selectAllItem.action'
-        remove_url = 'https://cart.jd.com/batchRemoveSkusFromCart.action'
         data = {
-            't': 0,
-            'outSkus': '',
-            'random': random.random(),
+            'functionId': 'pcCart_jc_cartUnCheckAll',
+            'appid': 'JDC_mall_cart',
+            'body': '{"serInfo":{"area":"","user-key":""}}',
+            'loginType': 3
         }
-        try:
-            select_resp = self.sess.post(url=select_url, data=data)
-            remove_resp = self.sess.post(url=remove_url, data=data)
-            if (not self.response_status(select_resp)) or (not self.response_status(remove_resp)):
-                return False
-            return True
-        except Exception as e:
-            return False
+
+        resp = self.sess.post(url=url, headers=headers, data=data)
+
+        # return self.response_status(resp) and resp.json()['success']
+        return resp
+
+    def addCartSku(self, skuId, skuNum):
+        """ 加入购入车
+        skuId 商品sku
+        skuNum 购买数量
+        retrun 是否成功
+        """
+        url = 'https://api.m.jd.com/api'
+
+        headers = {
+            'User-Agent': self.user_agent,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'origin': 'https://cart.jd.com',
+            'referer': 'https://cart.jd.com'
+        }
+
+        data = {
+            'functionId': 'pcCart_jc_cartAdd',
+            'appid': 'JDC_mall_cart',
+            'body': '{\"operations\":[{\"carttype\":1,\"TheSkus\":[{\"Id\":\"' + skuId + '\",\"num\":' + str(skuNum) + '}]}]}',
+            'loginType': 3
+        }
+
+        resp = self.sess.post(url=url, headers=headers, data=data)
+
+        return self.response_status(resp) and resp.json()['success']
+
+    def changeCartSkuCount(self, skuId, skuUid, skuNum, areaId):
+        """ 修改购物车商品数量
+        skuId 商品sku
+        skuUid 商品用户关系
+        skuNum 购买数量
+        retrun 是否成功
+        """
+        url = 'https://api.m.jd.com/api'
+
+        headers = {
+            'User-Agent': self.user_agent,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'origin': 'https://cart.jd.com',
+            'referer': 'https://cart.jd.com'
+        }
+
+        body = '{\"operations\":[{\"TheSkus\":[{\"Id\":\"'+skuId+'\",\"num\":'+str(
+            skuNum)+',\"skuUuid\":\"'+skuUid+'\",\"useUuid\":false}]}],\"serInfo\":{\"area\":\"'+areaId+'\"}}'
+        data = {
+            'functionId': 'pcCart_jc_changeSkuNum',
+            'appid': 'JDC_mall_cart',
+            'body': body,
+            'loginType': 3
+        }
+
+        resp = self.sess.post(url=url, headers=headers, data=data)
+
+        return self.response_status(resp) and resp.json()['success']
+
+    def prepareCart(self, skuId, skuNum, areaId):
+        """ 下单前准备购物车
+        1 取消全部勾选（返回购物车信息）
+        2 已在购物车则修改商品数量
+        3 不在购物车则加入购物车
+        skuId 商品sku
+        skuNum 商品数量
+        return True/False
+        """
+        resp = self.uncheckCartAll()
+        respObj = resp.json()
+        if not self.response_status(resp) or not respObj['success']:
+            raise Exception('购物车取消勾选失败')
+
+        # 检查商品是否已在购物车
+        cartInfo = respObj['resultData']['cartInfo']
+        if not cartInfo:
+            # 购物车为空 直接加入
+            return self.addCartSku(skuId, skuNum)
+
+        venders = cartInfo['vendors']
+
+        for vender in venders:
+            # if str(vender['vendorId']) != self.item_details[skuId]['vender_id']:
+            #     continue
+            items = vender['sorted']
+            for item in items:
+                if str(item['item']['Id']) == skuId:
+                    # 在购物车中 修改数量
+                    return self.changeCartSkuCount(skuId, item['item']['skuUuid'], skuNum, areaId)
+        # 不在购物车中
+        return self.addCartSku(skuId, skuNum)
 
     ############## 订单相关 #############
+
     def submit_order_with_retry(self, retry=3, interval=4):
         """提交订单，并且带有重试功能
         :param retry: 重试次数
@@ -387,9 +439,7 @@ class Session(object):
 
     def _save_invoice(self):
         """下单第三方商品时如果未设置发票，将从电子发票切换为普通发票
-
         http://jos.jd.com/api/complexTemplate.htm?webPamer=invoice&groupName=%E5%BC%80%E6%99%AE%E5%8B%92%E5%85%A5%E9%A9%BB%E6%A8%A1%E5%BC%8FAPI&id=566&restName=jd.kepler.trade.submit&isMulti=true
-
         :return:
         """
         url = 'https://trade.jd.com/shopping/dynamic/invoice/saveInvoice.action'
@@ -445,6 +495,5 @@ class Session(object):
 
     def response_status(self, resp):
         if resp.status_code != requests.codes.OK:
-            print('Status: %u, Url: %s' % (resp.status_code, resp.url))
             return False
         return True

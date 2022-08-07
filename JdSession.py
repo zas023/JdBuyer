@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 import json
 import os
 import sys
@@ -24,41 +25,41 @@ class Session(object):
 
     # 初始化
     def __init__(self):
-        self.user_agent = DEFAULT_USER_AGENT
-        self.headers = {'User-Agent': self.user_agent}
+        self.userAgent = DEFAULT_USER_AGENT
+        self.headers = {'User-Agent': self.userAgent}
         self.timeout = DEFAULT_TIMEOUT
-        self.item_details = dict()  # 商品信息：分类id、商家id
+        self.itemDetails = dict()  # 商品信息：分类id、商家id
         self.username = 'jd'
-        self.is_login = False
+        self.isLogin = False
         self.password = None
         self.sess = requests.session()
         try:
-            self.load_cookies()
+            self.loadCookies()
         except Exception:
             pass
 
     ############## 登录相关 #############
     # 保存 cookie
-    def _save_cookies(self):
-        cookies_file = os.path.join(
+    def saveCookies(self):
+        cookiesFile = os.path.join(
             absPath, './cookies/{0}.cookies'.format(self.username))
-        directory = os.path.dirname(cookies_file)
+        directory = os.path.dirname(cookiesFile)
         if not os.path.exists(directory):
             os.makedirs(directory)
-        with open(cookies_file, 'wb') as f:
+        with open(cookiesFile, 'wb') as f:
             pickle.dump(self.sess.cookies, f)
 
     # 加载 cookie
-    def load_cookies(self):
-        cookies_file = os.path.join(
+    def loadCookies(self):
+        cookiesFile = os.path.join(
             absPath, './cookies/{0}.cookies'.format(self.username))
-        with open(cookies_file, 'rb') as f:
+        with open(cookiesFile, 'rb') as f:
             local_cookies = pickle.load(f)
         self.sess.cookies.update(local_cookies)
-        self.is_login = self._validate_cookies()
+        self.isLogin = self._validateCookies()
 
     # 验证 cookie
-    def _validate_cookies(self):
+    def _validateCookies(self):
         """
         通过访问用户订单列表页进行判断：若未登录，将会重定向到登陆页面。
         :return: cookies是否有效 True/False
@@ -70,7 +71,7 @@ class Session(object):
         try:
             resp = self.sess.get(url=url, params=payload,
                                  allow_redirects=False)
-            if self.response_status(resp):
+            if self.respStatus(resp):
                 return True
         except Exception as e:
             return False
@@ -79,13 +80,13 @@ class Session(object):
         return False
 
     # 获取登录页
-    def _get_login_page(self):
+    def getLoginPage(self):
         url = "https://passport.jd.com/new/login.aspx"
         page = self.sess.get(url, headers=self.headers)
         return page
 
     # 获取登录二维码
-    def get_QRcode(self):
+    def getQRcode(self):
         url = 'https://qr.m.jd.com/show'
         payload = {
             'appid': 133,
@@ -93,18 +94,18 @@ class Session(object):
             't': str(int(time.time() * 1000)),
         }
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Referer': 'https://passport.jd.com/new/login.aspx',
         }
         resp = self.sess.get(url=url, headers=headers, params=payload)
 
-        if not self.response_status(resp):
+        if not self.respStatus(resp):
             return None
 
         return resp.content
 
     # 获取Ticket
-    def _get_QRcode_ticket(self):
+    def getQRcodeTicket(self):
         url = 'https://qr.m.jd.com/check'
         payload = {
             'appid': '133',
@@ -113,46 +114,46 @@ class Session(object):
             '_': str(int(time.time() * 1000)),
         }
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Referer': 'https://passport.jd.com/new/login.aspx',
         }
         resp = self.sess.get(url=url, headers=headers, params=payload)
 
-        if not self.response_status(resp):
+        if not self.respStatus(resp):
             return False
 
-        resp_json = self.parse_json(resp.text)
-        if resp_json['code'] != 200:
+        respJson = self.parseJson(resp.text)
+        if respJson['code'] != 200:
             return None
         else:
-            return resp_json['ticket']
+            return respJson['ticket']
 
     # 验证Ticket
-    def _validate_QRcode_ticket(self, ticket):
+    def validateQRcodeTicket(self, ticket):
         url = 'https://passport.jd.com/uc/qrCodeTicketValidation'
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Referer': 'https://passport.jd.com/uc/login?ltype=logout',
         }
         resp = self.sess.get(url=url, headers=headers, params={'t': ticket})
 
-        if not self.response_status(resp):
+        if not self.respStatus(resp):
             return False
 
-        resp_json = json.loads(resp.text)
-        if resp_json['returnCode'] == 0:
+        respJson = json.loads(resp.text)
+        if respJson['returnCode'] == 0:
             return True
         else:
             return False
 
     ############## 商品方法 #############
     # 获取商品详情信息
-    def _get_item_detail(self, sku_id):
-        '''
-        :param sku_id
+    def getItemDetail(self, skuId):
+        """
+        :param skuId
         :return 商品信息
-        '''
-        url = 'https://item.jd.com/{}.html'.format(sku_id)
+        """
+        url = 'https://item.jd.com/{}.html'.format(skuId)
         page = requests.get(url=url, headers=self.headers)
 
         html = etree.HTML(page.text)
@@ -161,56 +162,72 @@ class Session(object):
         cat = html.xpath('//a[@clstag="shangpin|keycount|product|mbNav-3"]/@href')[
             0].replace('//list.jd.com/list.html?cat=', '')
 
-        detail = dict(cat_id=cat, vender_id=vender)
+        if not vender or not cat:
+            raise Exception('获取商品信息失败，请检查SKU是否正确')
+
+        detail = dict(catId=cat, venderId=vender)
         return detail
+
+    def fetchItemDetail(self, skuId):
+        """ 解析商品信息
+        :param skuId
+        """
+        detail = self.getItemDetail(skuId)
+        self.itemDetails[skuId] = detail
 
     ############## 库存方法 #############
     # 获取单个商品库存状态
-    def _get_item_stock(self, sku_id, num, area_id):
+
+    def getItemStock(self, skuId, num, areaId):
         """
-        :param sku_id: 商品id
+        :param skuId: 商品id
         :param num: 商品数量
-        :param area_id: 地区id
+        :param areadId: 地区id
         :return: 商品是否有货 True/False
         """
 
-        item = self.item_details.get(sku_id)
+        item = self.itemDetails.get(skuId)
 
         if not item:
             return False
 
         url = 'https://c0.3.cn/stock'
         payload = {
-            'skuId': sku_id,
+            'skuId': skuId,
             'buyNum': num,
-            'area': area_id,
+            'area': areaId,
             'ch': 1,
             '_': str(int(time.time() * 1000)),
             'callback': 'jQuery{}'.format(random.randint(1000000, 9999999)),
             # get error stock state without this param
             'extraParam': '{"originid":"1"}',
             # get 403 Forbidden without this param (obtained from the detail page)
-            'cat': item.get('cat_id'),
+            'cat': item.get('catId'),
             # return seller information with this param (can't be ignored)
-            'venderId': item.get('vender_id')
+            'venderId': item.get('venderId')
         }
         headers = {
-            'User-Agent': self.user_agent,
-            'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
+            'User-Agent': self.userAgent,
+            'Referer': 'https://item.jd.com/{}.html'.format(skuId),
         }
 
-        resp_text = ''
+        respText = ''
         try:
-            resp_text = requests.get(
+            respText = requests.get(
                 url=url, params=payload, headers=headers, timeout=self.timeout).text
-            resp_json = self.parse_json(resp_text)
-            stock_info = resp_json.get('stock')
-            sku_state = stock_info.get('skuState')  # 商品是否上架
+            respJson = self.parseJson(respText)
+            stockInfo = respJson.get('stock')
+            skuState = stockInfo.get('skuState')  # 商品是否上架
             # 商品库存状态：33 -- 现货  0,34 -- 无货  36 -- 采购中  40 -- 可配货
-            stock_state = stock_info.get('StockState')
-            return sku_state == 1 and stock_state in (33, 40)
+            stockState = stockInfo.get('StockState')
+            return skuState == 1 and stockState in (33, 40)
+        except requests.exceptions.Timeout:
+            raise Exception('查询 %s 库存信息超时(%ss)', skuId, self.timeout)
+        except requests.exceptions.RequestException as e:
+            raise Exception('查询 %s 库存信息发生网络请求异常：%s', skuId, e)
         except Exception as e:
-            return False
+            raise Exception(
+                '查询 %s 库存信息发生异常, resp: %s, exception: %s', skuId, respText, e)
 
     ############## 购物车相关 #############
 
@@ -221,7 +238,7 @@ class Session(object):
         url = 'https://api.m.jd.com/api'
 
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Content-Type': 'application/x-www-form-urlencoded',
             'origin': 'https://cart.jd.com',
             'referer': 'https://cart.jd.com'
@@ -236,7 +253,7 @@ class Session(object):
 
         resp = self.sess.post(url=url, headers=headers, data=data)
 
-        # return self.response_status(resp) and resp.json()['success']
+        # return self.respStatus(resp) and resp.json()['success']
         return resp
 
     def addCartSku(self, skuId, skuNum):
@@ -248,7 +265,7 @@ class Session(object):
         url = 'https://api.m.jd.com/api'
 
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Content-Type': 'application/x-www-form-urlencoded',
             'origin': 'https://cart.jd.com',
             'referer': 'https://cart.jd.com'
@@ -263,7 +280,7 @@ class Session(object):
 
         resp = self.sess.post(url=url, headers=headers, data=data)
 
-        return self.response_status(resp) and resp.json()['success']
+        return self.respStatus(resp) and resp.json()['success']
 
     def changeCartSkuCount(self, skuId, skuUid, skuNum, areaId):
         """ 修改购物车商品数量
@@ -275,7 +292,7 @@ class Session(object):
         url = 'https://api.m.jd.com/api'
 
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Content-Type': 'application/x-www-form-urlencoded',
             'origin': 'https://cart.jd.com',
             'referer': 'https://cart.jd.com'
@@ -292,7 +309,7 @@ class Session(object):
 
         resp = self.sess.post(url=url, headers=headers, data=data)
 
-        return self.response_status(resp) and resp.json()['success']
+        return self.respStatus(resp) and resp.json()['success']
 
     def prepareCart(self, skuId, skuNum, areaId):
         """ 下单前准备购物车
@@ -305,7 +322,7 @@ class Session(object):
         """
         resp = self.uncheckCartAll()
         respObj = resp.json()
-        if not self.response_status(resp) or not respObj['success']:
+        if not self.respStatus(resp) or not respObj['success']:
             raise Exception('购物车取消勾选失败')
 
         # 检查商品是否已在购物车
@@ -317,7 +334,7 @@ class Session(object):
         venders = cartInfo['vendors']
 
         for vender in venders:
-            # if str(vender['vendorId']) != self.item_details[skuId]['vender_id']:
+            # if str(vender['vendorId']) != self.itemDetails[skuId]['vender_id']:
             #     continue
             items = vender['sorted']
             for item in items:
@@ -329,22 +346,23 @@ class Session(object):
 
     ############## 订单相关 #############
 
-    def submit_order_with_retry(self, retry=3, interval=4):
+    def submitOrderWitchTry(self, retry=3, interval=4):
         """提交订单，并且带有重试功能
         :param retry: 重试次数
         :param interval: 重试间隔
         :return: 订单提交结果 True/False
         """
         for i in range(1, retry + 1):
-            self.get_checkout_page()
-            if self.submit_order():
+            self.getCheckoutPage()
+            sumbmitSuccess, msg = self.submitOrder()
+            if sumbmitSuccess:
                 return True
             else:
                 if i < retry:
                     time.sleep(interval)
         return False
 
-    def get_checkout_page(self):
+    def getCheckoutPage(self):
         """获取订单结算页面信息
         :return: 结算信息 dict
         """
@@ -354,12 +372,12 @@ class Session(object):
             'rid': str(int(time.time() * 1000)),
         }
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Referer': 'https://cart.jd.com/cart',
         }
         try:
             resp = self.sess.get(url=url, params=payload, headers=headers)
-            if not self.response_status(resp):
+            if not self.respStatus(resp):
                 return
 
             html = etree.HTML(resp.text)
@@ -381,7 +399,7 @@ class Session(object):
         except Exception as e:
             return
 
-    def submit_order(self):
+    def submitOrder(self):
         """提交订单
         :return: True/False 订单提交结果
         """
@@ -405,39 +423,39 @@ class Session(object):
         }
 
         # add payment password when necessary
-        payment_pwd = self.password
-        if payment_pwd:
+        paymentPwd = self.password
+        if paymentPwd:
             data['submitOrderParam.payPassword'] = ''.join(
-                ['u3' + x for x in payment_pwd])
+                ['u3' + x for x in paymentPwd])
 
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Host': 'trade.jd.com',
             'Referer': 'http://trade.jd.com/shopping/order/getOrderInfo.action',
         }
 
         try:
             resp = self.sess.post(url=url, data=data, headers=headers)
-            resp_json = json.loads(resp.text)
+            respJson = json.loads(resp.text)
 
-            if resp_json.get('success'):
-                order_id = resp_json.get('orderId')
-                return True
+            if respJson.get('success'):
+                orderId = respJson.get('orderId')
+                return True, orderId
             else:
-                message, result_code = resp_json.get(
-                    'message'), resp_json.get('resultCode')
+                message, result_code = respJson.get(
+                    'message'), respJson.get('resultCode')
                 if result_code == 0:
-                    self._save_invoice()
+                    self._saveInvoice()
                     message = message + '(下单商品可能为第三方商品，将切换为普通发票进行尝试)'
                 elif result_code == 60077:
                     message = message + '(可能是购物车为空 或 未勾选购物车中商品)'
                 elif result_code == 60123:
                     message = message + '(需要在config.ini文件中配置支付密码)'
-                return False
+                return False, message
         except Exception as e:
-            return False
+            return False, e
 
-    def _save_invoice(self):
+    def _saveInvoice(self):
         """下单第三方商品时如果未设置发票，将从电子发票切换为普通发票
         http://jos.jd.com/api/complexTemplate.htm?webPamer=invoice&groupName=%E5%BC%80%E6%99%AE%E5%8B%92%E5%85%A5%E9%A9%BB%E6%A8%A1%E5%BC%8FAPI&id=566&restName=jd.kepler.trade.submit&isMulti=true
         :return:
@@ -483,17 +501,17 @@ class Session(object):
             "invoiceParam.saveInvoiceFlag": 1
         }
         headers = {
-            'User-Agent': self.user_agent,
+            'User-Agent': self.userAgent,
             'Referer': 'https://trade.jd.com/shopping/dynamic/invoice/saveInvoice.action',
         }
         self.sess.post(url=url, data=data, headers=headers)
 
-    def parse_json(self, s):
+    def parseJson(self, s):
         begin = s.find('{')
         end = s.rfind('}') + 1
         return json.loads(s[begin:end])
 
-    def response_status(self, resp):
+    def respStatus(self, resp):
         if resp.status_code != requests.codes.OK:
             return False
         return True

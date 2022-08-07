@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 import sys
 import os
 import time
@@ -28,34 +29,37 @@ if getattr(sys, 'frozen', False):
 elif __file__:
     absPath = os.path.dirname(os.path.abspath(__file__))
 
+
 class JdBuyerUI(QWidget):
 
     def __init__(self):
         super().__init__()
         self.session = Session()
         self.ticketThread = TicketThread(self.session)
-        self.ticketThread.ticket_signal.connect(self.ticketSignal)
+        self.ticketThread.ticketSignal.connect(self.ticketSignal)
         self.initUI()
         self.loadData()
 
     def loadData(self):
-        with open(os.path.join(absPath,'config.json'), "rb") as f:
+        with open(os.path.join(absPath, 'config.json'), "rb") as f:
             self.config = json.load(f)
         self.skuEdit.setText(self.config.get('skuId'))
         self.areaEdit.setText(self.config.get('areaId'))
         self.passwordEdit.setText(self.config.get('password'))
         self.numSlider.setValue(self.config.get('count'))
         self.stockSlider.setValue(self.config.get('stockInterval'))
-        self.numLabel.setText(NUM_LABEL_FORMAT.format(self.config.get('count')))
-        self.stockLabel.setText(STOCK_LABEL_FORMAT.format(self.config.get('stockInterval')))
-    
+        self.numLabel.setText(
+            NUM_LABEL_FORMAT.format(self.config.get('count')))
+        self.stockLabel.setText(STOCK_LABEL_FORMAT.format(
+            self.config.get('stockInterval')))
+
     def saveData(self):
-        with open(os.path.join(absPath,'config.json'),'w', encoding='utf-8') as f:
+        with open(os.path.join(absPath, 'config.json'), 'w', encoding='utf-8') as f:
             # json.dump(my_list,f)
             # 直接显示中文,不以ASCII的方式显示
             # json.dump(my_list,f,ensure_ascii=False)
             # 显示缩进
-            json.dump(self.config,f,ensure_ascii=False,indent=2)
+            json.dump(self.config, f, ensure_ascii=False, indent=2)
 
     def initUI(self):
         grid = QGridLayout()
@@ -127,7 +131,7 @@ class JdBuyerUI(QWidget):
         # 信息展示
         self.infoLabel = QLabel()
         self.infoLabel.setText("当前登录状态是: {0}".format(
-            '已登录' if self.session.is_login else '未登录'))
+            '已登录' if self.session.isLogin else '未登录'))
         grid.addWidget(self.infoLabel, 6, 0, 2, 4)
 
         self.setLayout(grid)
@@ -138,7 +142,7 @@ class JdBuyerUI(QWidget):
 
     # 开启下单任务
     def startTask(self):
-        if not self.session.is_login:
+        if not self.session.isLogin:
             self.qrLogin()
             self.infoLabel.setText('请使用京东扫码登录')
             return
@@ -147,12 +151,12 @@ class JdBuyerUI(QWidget):
         self.config['areaId'] = self.areaEdit.text()
         self.saveData()
         self.buyerThread = BuyerThread(self.session, self.config)
-        self.buyerThread.info_signal.connect(self.infoSignal)
+        self.buyerThread.infoSignal.connect(self.infoSignal)
         self.buyerThread.start()
 
     # 扫码登录
     def qrLogin(self):
-        res = self.session.get_QRcode()
+        res = self.session.getQRcode()
         img = QImage.fromData(res)
         self.qrLabel.setPixmap(QPixmap.fromImage(img))
         self.qrLabel.show()
@@ -182,7 +186,7 @@ class JdBuyerUI(QWidget):
             self.handleStopBrn()
 
     def handleStopBrn(self):
-        if self.session.is_login:
+        if self.session.isLogin:
             self.buyerThread.pause()
         else:
             self.ticketThread.pause()
@@ -219,7 +223,7 @@ class JdBuyerUI(QWidget):
 class TicketThread(QThread):
     """ check ticket
     """
-    ticket_signal = Signal(str)
+    ticketSignal = Signal(str)
 
     def __init__(self, session):
         super().__init__()
@@ -235,35 +239,34 @@ class TicketThread(QThread):
         retry_times = 85
         for i in range(retry_times):
             if self._isPause:
-                self.ticket_signal.emit('已取消登录')
+                self.ticketSignal.emit('已取消登录')
                 return
-            ticket = self.session._get_QRcode_ticket()
+            ticket = self.session.getQRcodeTicket()
             if ticket:
                 break
             time.sleep(2)
         else:
-            self.ticket_signal.emit('二维码过期，请重新获取扫描')
+            self.ticketSignal.emit('二维码过期，请重新获取扫描')
             return
 
         # validate QR code ticket
-        if not self.session._validate_QRcode_ticket(ticket):
-            self.ticket_signal.emit('二维码信息校验失败')
+        if not self.session.validateQRcodeTicket(ticket):
+            self.ticketSignal.emit('二维码信息校验失败')
             return
 
-        self.ticket_signal.emit('成功')
-        self.session.is_login = True
-        self.session._save_cookies()
+        self.ticketSignal.emit('成功')
+        self.session.isLogin = True
+        self.session.saveCookies()
 
 # 商品监控线程
 
 
 class BuyerThread(QThread):
 
-    info_signal = Signal(str)
+    infoSignal = Signal(str)
 
     def __init__(self, session, taskParam):
         super().__init__()
-        session.stop_flag = False
         self.session = session
         self.taskParam = taskParam
         self._isPause = False
@@ -278,32 +281,34 @@ class BuyerThread(QThread):
         stock_interval = self.taskParam.get('stockInterval')
         buyTime = self.taskParam.get('buyTime')
 
-        self.session.item_details[sku_id] = self.session._get_item_detail(
-            sku_id)
-        submit_retry = 3
-        submit_interval = 5
+        self.session.fetchItemDetail(sku_id)
+        submitRetry = 3
+        submitInterval = 5
 
         timer = Timer(buyTime)
-        self.info_signal.emit('定时中，将于 {0} 开始执行'.format(buyTime))
+        self.infoSignal.emit('定时中，将于 {0} 开始执行'.format(buyTime))
         timer.start()
 
         while True:
             if self._isPause:
-                self.info_signal.emit('{0} 已取消下单'.format(
+                self.infoSignal.emit('{0} 已取消下单'.format(
                     time.strftime(DATA_FORMAT, time.localtime())))
                 return
-            if not self.session._get_item_stock(sku_id=sku_id, num=1, area_id=area_id):
-                self.info_signal.emit('{0} 不满足下单条件，{1}s后进行下一次查询'.format(
-                    time.strftime(DATA_FORMAT, time.localtime()), stock_interval))
-            else:
-                self.info_signal.emit('{0} 满足下单条件，开始执行'.format(sku_id))
-                if not self.session.prepareCart(sku_id, count, area_id):
-                    self.info_signal.emit('{0} 加入购物车失败，{1}s后进行下一次查询'.format(
-                    time.strftime(DATA_FORMAT, time.localtime()), stock_interval))
-                else :
-                    if self.session.submit_order_with_retry(submit_retry, submit_interval):
-                        self.info_signal.emit('下单成功')
-                        return
+            try:
+                if not self.session.getItemStock(skuId=sku_id, num=1, areaId=area_id):
+                    self.infoSignal.emit('{0} 不满足下单条件，{1}s后进行下一次查询'.format(
+                        time.strftime(DATA_FORMAT, time.localtime()), stock_interval))
+                else:
+                    self.infoSignal.emit('{0} 满足下单条件，开始执行'.format(sku_id))
+                    if not self.session.prepareCart(sku_id, count, area_id):
+                        self.infoSignal.emit('{0} 加入购物车失败，{1}s后进行下一次查询'.format(
+                            time.strftime(DATA_FORMAT, time.localtime()), stock_interval))
+                    else:
+                        if self.session.submitOrderWitchTry(submitRetry, submitInterval):
+                            self.infoSignal.emit('下单成功')
+                            return
+            except Exception as e:
+                self.infoSignal.emit(e)
             time.sleep(stock_interval)
 
 
@@ -316,4 +321,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

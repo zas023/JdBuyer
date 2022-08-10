@@ -77,7 +77,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.14 (KHTML, like Gecko) Chrome/24.0.1292.0 Safari/537.14"
 ]
 
-def send_wechat(message, sckey):
+def send_wechat(message, desp, sckey):
     if not message.strip():
         logger.error('Text of message is empty!')
         return
@@ -90,7 +90,7 @@ def send_wechat(message, sckey):
             'https://sc.ftqq.com/{}.send?text={}&desp={}'.format(sckey, message, desp)
         )
         resp_json = json.loads(resp.text)
-        if resp_json.get('errno') == 0:
+        if resp_json['data']['errno'] == 0:
             logger.info('Message sent successfully [text: %s, desp: %s]', message, desp)
         else:
             logger.error('Fail to send message, reason: %s', resp.text)
@@ -134,8 +134,7 @@ def open_image(image_file):
 
 def save_image(resp, image_file):
     with open(image_file, 'wb') as f:
-        for chunk in resp.iter_content(chunk_size=1024):
-            f.write(chunk)
+        f.write(resp)
 
 
 def parse_json(s):

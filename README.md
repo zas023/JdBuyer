@@ -1,15 +1,37 @@
-# JdBuyer
+<div id="top"></div>
 
-## 关于作者
-[![CoderZhou's GitHub stats](https://github-readme-stats.vercel.app/api?username=zas023&show_icons=true&count_private=true&theme=vue)](https://github.com/zas023)
+<h1 align="center">
+<img src="https://img.shields.io/github/contributors/zas023/Jdbuyer.svg?style=for-the-badge" />
+<img src="https://img.shields.io/github/stars/zas023/Jdbuyer.svg?style=for-the-badge" />
+<img src="https://img.shields.io/github/issues/zas023/Jdbuyer.svg?style=for-the-badge" />
+<img src="https://img.shields.io/badge/platform-windows%20%7C%20macos-green?style=for-the-badge" />
+<img src="https://img.shields.io/badge/license-GLP-important?style=for-the-badge" />
+</h1>
+
+
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/PlayCover/PlayCover">
+    <img src="logo.ico" alt="Logo" width="100" height="100">
+  </a>
+
+  <h3 align="center">Jd小猪手</h3>
+
+  <p align="center">
+    一款支持京东自动下单的小工具。
+    <br />
+    <br />
+  </p>
+</div>
 
 ## 1 关于项目
 
-![](logo.ico)
+欢迎使用京东小猪手，当您在京东上想要购买的商品无货时，小助手可以帮助您全天候监听商品库存，并在有货时第一时间自动尝试下单，且下单成功后支持微信通知触达。
 
-这是一个京东小工具，如果你想在京东上购买的商品无货时，小助手可以帮助你全天候监听商品库存，并在有货时第一时间自动尝试下单，且下单成功后支持微信通知触达。
+![](./assest/shootscreen.mac.png)
 
-📢注意：由于货源有限，监听到货源后并不能保证一定下单成功，只能保证让你和全国黄牛站在同一起跑线上，剩下的交给奇迹。
+📢**注意**：由于货源有限，监听到货源后并不能保证一定下单成功，只能保证让你和全国黄牛站在同一起跑线上，剩下的交给奇迹。
 
 ## 2 食用教程
 
@@ -51,7 +73,6 @@ python JdBuyer.py
 **1. 如何配置**
 
 运行程序后，可以看到一共有一下五个配置：
-![](./assest/shootscreen.mac.png)
 
 |参数名称|是否必填|说明|
 |--|--|--|

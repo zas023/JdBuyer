@@ -95,12 +95,22 @@ class Buyer(object):
 
 if __name__ == '__main__':
 
-    # sku_ids = '100015253059,100015253079,100015253061'
-    skuId = '100015253059'  # 商品id
-    areaId = '1_2901_55554_0'  # 区域id
-    skuNum = 1  # 购买数量
-    stockInterval = 3  # 库存查询间隔
+    # 商品sku
+    skuId = '100015253059'
+    # 区域id(可根据工程 area_id 目录查找)
+    areaId = '1_2901_55554_0'
+    # 购买数量
+    skuNum = 1
+    # 库存查询间隔(秒)
+    stockInterval = 3
+    # 监听库存后尝试下单次数
+    submitRetry = 3
+    # 下单尝试间隔(秒)
+    submitInterval = 5
+    # 程序开始执行时间(晚于当前时间立即执行，适用于定时抢购类)
+    buyTime = '2022-10-10 00:00:00'
 
     buyer = Buyer()  # 初始化
     buyer.loginByQrCode()
-    buyer.buyItemInStock(skuId, areaId, skuNum, stockInterval)
+    buyer.buyItemInStock(skuId, areaId, skuNum, stockInterval,
+                         submitRetry, submitInterval, buyTime)

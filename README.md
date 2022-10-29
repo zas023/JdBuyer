@@ -33,6 +33,13 @@
 
 📢**注意**：由于货源有限，监听到货源后并不能保证一定下单成功，只能保证让你和全国黄牛站在同一起跑线上，剩下的交给奇迹。
 
+### 1.1 ChangeList
+
+- 2022-10-29
+
+1. 新增预售商品定金下单模式
+2. 切换库存查询方式（注意控制速度）
+
 ## 2 食用教程
 
 目前该项目支持两种 **Shell 脚本** 和 **GUI 图形界面** 两种运行模式，目前 Shell 模式支持日志和微信通知，但还需一些额外配置，可根据自身条件选择启动方式。
@@ -47,6 +54,8 @@
 
 ``` shell
 pip install -r requirements.txt
+# or 
+pip3 install -r requirements.txt
 ```
 
 3. 修改配置
@@ -55,10 +64,13 @@ pip install -r requirements.txt
 
 4. 运行脚本
 
-修改项目主文件 `JdBuyer.py` 中 `sku_ids` 和 `area_id`。
+修改项目主文件 `JdBuyer.py` 最后部分中 `skuId` 和 `areaId`。
+*其余参数字请按注释自行选择修改*
 
 然后运行程序：
 ``` python 
+python JdBuyer.py
+# or
 python JdBuyer.py
 ```
 
@@ -92,7 +104,7 @@ python JdBuyer.py
 
 ### 2.3 视频教程
 
-[传送门](https://www.bilibili.com/video/BV1xF411K7nt?vd_source=26dbffac58b770ac34510d2ac30d229d)
+[B站传送门，记得一键三连哦！](https://www.bilibili.com/video/BV1pe4y1e7ty)
 
 ## 3 Todo
 - [x] 支持扫码登陆

@@ -62,11 +62,11 @@ class Buyer(object):
         self.session.saveCookies()
 
     ############## 外部方法 #############
-    def buyItemInStock(self, skuId, areaId, num=1, stockInterval=3, submitRetry=3, submitInterval=5, buyTime='2022-08-06 00:00:00'):
+    def buyItemInStock(self, skuId, areaId, skuNum=1, stockInterval=3, submitRetry=3, submitInterval=5, buyTime='2022-08-06 00:00:00'):
         """根据库存自动下单商品
         :skuId 商品sku
         :areaId 下单区域id
-        :num 购买数量
+        :skuNum 购买数量
         :stockInterval 库存查询间隔（单位秒）
         :submitRetry 下单尝试次数
         :submitInterval 下单尝试间隔（单位秒）
@@ -78,20 +78,16 @@ class Buyer(object):
 
         while True:
             try:
-                if not self.session.getItemStock(skuId, num, areaId):
+                if not self.session.getItemStock(skuId, skuNum, areaId):
                     logger.info('不满足下单条件，{0}s后进行下一次查询'.format(stockInterval))
                 else:
                     logger.info('{0} 满足下单条件，开始执行'.format(skuId))
-                    if not self.session.prepareCart(skuId, num, areaId):
-                        logger.info(
-                            '加入购物车失败，{1}s后进行下一次查询'.format(stockInterval))
-                    else:
-                        if self.session.submitOrderWitchTry(submitRetry, submitInterval):
-                            logger.info('下单成功')
-                            if self.enableWx:
-                                send_wechat(
-                                    message='JdBuyerApp', desp='您的商品已下单成功，请及时支付订单', sckey=self.scKey)
-                            return
+                    if self.session.trySubmitOrder(skuId, skuNum, areaId, submitRetry, submitInterval):
+                        logger.info('下单成功')
+                        if self.enableWx:
+                            send_wechat(
+                                message='JdBuyerApp', desp='您的商品已下单成功，请及时支付订单', sckey=self.scKey)
+                        return
             except Exception as e:
                 logger.error(e)
             time.sleep(stockInterval)
@@ -101,10 +97,10 @@ if __name__ == '__main__':
 
     # sku_ids = '100015253059,100015253079,100015253061'
     skuId = '100015253059'  # 商品id
-    areaId = '1_2901_4135'  # 区域id
-    num = 1  # 购买数量
-    stockInterval = 1  # 库存查询间隔
+    areaId = '1_2901_55554_0'  # 区域id
+    skuNum = 1  # 购买数量
+    stockInterval = 3  # 库存查询间隔
 
     buyer = Buyer()  # 初始化
     buyer.loginByQrCode()
-    buyer.buyItemInStock(skuId, areaId, num, stockInterval)
+    buyer.buyItemInStock(skuId, areaId, skuNum, stockInterval)

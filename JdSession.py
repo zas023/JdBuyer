@@ -148,86 +148,44 @@ class Session(object):
 
     ############## 商品方法 #############
     # 获取商品详情信息
-    def getItemDetail(self, skuId):
-        """
+    def getItemDetail(self, skuId, skuNum=1, areaId=1):
+        """ 查询商品详情
         :param skuId
-        :return 商品信息
+        :return 商品信息（下单模式、库存）
         """
-        url = 'https://item.jd.com/{}.html'.format(skuId)
-        page = requests.get(url=url, headers=self.headers)
-
-        html = etree.HTML(page.text)
-        vender = html.xpath(
-            '//div[@class="follow J-follow-shop"]/@data-vid')[0]
-        cat = html.xpath('//a[@clstag="shangpin|keycount|product|mbNav-3"]/@href')[
-            0].replace('//list.jd.com/list.html?cat=', '')
-
-        if not vender or not cat:
-            raise Exception('获取商品信息失败，请检查SKU是否正确')
-
-        detail = dict(catId=cat, venderId=vender)
-        return detail
+        url = 'https://item-soa.jd.com/getWareBusiness'
+        payload = {
+            'skuId': skuId,
+            'area': areaId,
+            'num': skuNum
+        }
+        resp = requests.get(url=url, params=payload, headers=self.headers)
+        return resp
 
     def fetchItemDetail(self, skuId):
         """ 解析商品信息
         :param skuId
         """
-        detail = self.getItemDetail(skuId)
+        resp = self.getItemDetail(skuId).json()
+        shopId = resp['shopInfo']['shop']['shopId']
+        detail = dict(venderId=shopId)
+        if 'YuShouInfo' in resp:
+            detail['yushouUrl'] = resp['YuShouInfo']['url']
+        if 'miaoshaInfo' in resp:
+            detail['startTime'] = resp['miaoshaInfo']['startTime']
+            detail['endTime'] = resp['miaoshaInfo']['endTime']
         self.itemDetails[skuId] = detail
 
     ############## 库存方法 #############
-    # 获取单个商品库存状态
-
-    def getItemStock(self, skuId, num, areaId):
-        """
+    def getItemStock(self, skuId, skuNum, areaId):
+        """获取单个商品库存状态
         :param skuId: 商品id
         :param num: 商品数量
         :param areadId: 地区id
         :return: 商品是否有货 True/False
         """
-
-        item = self.itemDetails.get(skuId)
-
-        if not item:
-            return False
-
-        url = 'https://c0.3.cn/stock'
-        payload = {
-            'skuId': skuId,
-            'buyNum': num,
-            'area': areaId,
-            'ch': 1,
-            '_': str(int(time.time() * 1000)),
-            'callback': 'jQuery{}'.format(random.randint(1000000, 9999999)),
-            # get error stock state without this param
-            'extraParam': '{"originid":"1"}',
-            # get 403 Forbidden without this param (obtained from the detail page)
-            'cat': item.get('catId'),
-            # return seller information with this param (can't be ignored)
-            'venderId': item.get('venderId')
-        }
-        headers = {
-            'User-Agent': self.userAgent,
-            'Referer': 'https://item.jd.com/{}.html'.format(skuId),
-        }
-
-        respText = ''
-        try:
-            respText = requests.get(
-                url=url, params=payload, headers=headers, timeout=self.timeout).text
-            respJson = self.parseJson(respText)
-            stockInfo = respJson.get('stock')
-            skuState = stockInfo.get('skuState')  # 商品是否上架
-            # 商品库存状态：33 -- 现货  0,34 -- 无货  36 -- 采购中  40 -- 可配货
-            stockState = stockInfo.get('StockState')
-            return skuState == 1 and stockState in (33, 40)
-        except requests.exceptions.Timeout:
-            raise Exception('查询 %s 库存信息超时(%ss)', skuId, self.timeout)
-        except requests.exceptions.RequestException as e:
-            raise Exception('查询 %s 库存信息发生网络请求异常：%s', skuId, e)
-        except Exception as e:
-            raise Exception(
-                '查询 %s 库存信息发生异常, resp: %s, exception: %s', skuId, respText, e)
+        resp = self.getItemDetail(skuId, skuNum, areaId).json()
+        return 'stockInfo' in resp and resp['stockInfo']['isStock']
 
     ############## 购物车相关 #############
 
@@ -346,6 +304,27 @@ class Session(object):
 
     ############## 订单相关 #############
 
+    def trySubmitOrder(self, skuId, skuNum, areaId, retry=3, interval=5):
+        """提交订单
+        :return: 订单提交结果 True/False
+        """
+        itemDetail = self.itemDetails[skuId]
+        isYushou = False
+        if 'yushouUrl' in itemDetail:
+            self.getPreSallCheckoutPage(skuId, skuNum)
+            isYushou = True
+        else:
+            self.prepareCart(skuId, skuNum, areaId)
+            self.getCheckoutPage()
+
+        for i in range(1, retry + 1):
+            ret, msg = self.submitOrder(isYushou)
+            if ret:
+                return True
+            else:
+                time.sleep(interval)
+        return False
+
     def submitOrderWitchTry(self, retry=3, interval=4):
         """提交订单，并且带有重试功能
         :param retry: 重试次数
@@ -399,7 +378,42 @@ class Session(object):
         except Exception as e:
             return
 
-    def submitOrder(self):
+    def getPreSallCheckoutPage(self, skuId, skuNum=1):
+        """获取预售商品结算页面信息
+        :return: 结算信息 dict
+        """
+        url = 'https://cart.jd.com/cart/dynamic/gateForSubFlow.action'
+        # url = 'https://cart.jd.com/gotoOrder.action'
+        payload = {
+            'wids': skuId,
+            'nums': skuNum,
+            'subType': 32
+        }
+        headers = {
+            'User-Agent': self.userAgent,
+            'Referer': 'https://cart.jd.com/cart',
+        }
+        try:
+            resp = self.sess.get(url=url, params=payload, headers=headers)
+            if not self.respStatus(resp):
+                return
+
+            html = etree.HTML(resp.text)
+            self.eid = html.xpath("//input[@id='eid']/@value")
+            self.fp = html.xpath("//input[@id='fp']/@value")
+            self.risk_control = html.xpath("//input[@id='riskControl']/@value")
+            self.track_id = html.xpath("//input[@id='TrackID']/@value")
+            order_detail = {
+                # remove '寄送至： ' from the begin
+                'address': html.xpath("//span[@class='addr-info']")[0].text,
+                # remove '收件人:' from the begin
+                'receiver':  html.xpath("//span[@class='addr-name']")[0].text,
+            }
+            return order_detail
+        except Exception as e:
+            return
+
+    def submitOrder(self, isYushou=False):
         """提交订单
         :return: True/False 订单提交结果
         """
@@ -421,6 +435,11 @@ class Session(object):
             'submitOrderParam.fp': self.fp,
             'submitOrderParam.needCheck': 1,
         }
+
+        if isYushou:
+            data['submitOrderParam.needCheck'] = 1
+            data['preSalePaymentTypeInOptional'] = 2
+            data['submitOrderParam.payType4YuShou'] = 2
 
         # add payment password when necessary
         paymentPwd = self.password
@@ -515,3 +534,13 @@ class Session(object):
         if resp.status_code != requests.codes.OK:
             return False
         return True
+
+
+if __name__ == '__main__':
+
+    skuId = '100015253059'
+    areaId = '1_2901_55554_0'
+    skuNum = 1
+
+    session = Session()
+    print(session.getItemDetail(skuId, skuNum, areaId).text)

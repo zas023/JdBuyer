@@ -60,12 +60,13 @@ pip3 install -r requirements.txt
 
 3. 修改配置
 
-进入项目目录，找到 `config.ini` 文件，按照其中说明修改对于配置。
+进入项目目录，找到 `config.ini.example` 文件，将其复制为`config.ini`文件，然后按照其中说明修改对于配置。
 
 4. 运行脚本
 
-修改项目主文件 `JdBuyer.py` 最后部分中 `skuId` 和 `areaId`。
-*其余参数字请按注释自行选择修改*
+修改项目主文件 `JdBuyer.py` 最后部分中 `skuId`(商品编号，取自详情页链接) 和 `areaId`(下单地区），`start_time`(开始抢购时间），`end_time`（结束抢购时间）。
+*其余参数请按注释自行选择修改*
+
 
 然后运行程序：
 ``` python 

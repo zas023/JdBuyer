@@ -7,7 +7,6 @@ class Timer(object):
 
     def __init__(self, buyTime, sleepInterval=0.5):
 
-        # '2018-09-28 22:45:50'
         self.buy_time = datetime.strptime(buyTime, "%Y-%m-%d %H:%M:%S")
         self.sleepInterval = sleepInterval
 

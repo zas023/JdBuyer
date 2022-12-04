@@ -106,7 +106,8 @@ if __name__ == '__main__':
     from apscheduler.schedulers.background import BlockingScheduler
     import zoneinfo
     # 商品id,直接从详情页获取
-    skuId = '100043960941'
+    skuId = '100043960941'  # 准备抢4080公版
+    # skuId = '100012700398'
     # 区域id(可根据工程 area_id 目录查找)
     areaId = '19_1601_3637'
     # 购买数量
@@ -118,11 +119,11 @@ if __name__ == '__main__':
     # 下单尝试间隔(秒)
     submitInterval = 1
     # 预约商品的购买时间，建议比开抢时间提前1分钟左右，否则会有延迟的
-    # start_time = '2022-12-05 13:59:00'
-    # end_time = '2022-12-05 14:03:00'
+    start_time = '2022-12-05 13:59:00'
+    end_time = '2022-12-05 14:02:00'
 
-    start_time = '2022-12-04 22:17:00'
-    end_time = '2022-12-04 22:17:10'
+    # start_time = '2022-12-04 22:56:00'
+    # end_time = '2022-12-04 22:56:15'
 
     # 创建定时任务
     scheduler = BlockingScheduler()

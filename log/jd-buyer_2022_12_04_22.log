@@ -1,0 +1,40 @@
+2022-12-04 22:32:08,547 INFO: 登录成功
+2022-12-04 22:32:08,758 INFO: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-12-04 22:32:08,758 INFO: Added job "Buyer.buyItemInStock" to job store "default"
+2022-12-04 22:32:08,758 INFO: Scheduler started
+2022-12-04 22:32:08,759 WARNING: Run time of job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:17:00 CST], next run at: 2022-12-04 22:17:00 CST)" was missed by 0:15:08.759152
+2022-12-04 22:32:08,759 INFO: Removed job 0d86bf062442488890b9e2907f5cbb1c
+2022-12-04 22:32:37,005 INFO: 登录成功
+2022-12-04 22:32:37,205 INFO: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-12-04 22:32:37,205 INFO: Added job "Buyer.buyItemInStock" to job store "default"
+2022-12-04 22:32:37,205 INFO: Scheduler started
+2022-12-04 22:33:00,000 INFO: Running job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:33:00 CST], next run at: 2022-12-04 22:33:00 CST)" (scheduled at 2022-12-04 22:33:00+08:00)
+2022-12-04 22:33:00,001 INFO: Removed job 74307c8324fb4e619532e11eae547f44
+2022-12-04 22:33:00,219 INFO: 100043960941 满足下单条件，开始执行
+2022-12-04 22:33:05,543 INFO: 100043960941 满足下单条件，开始执行
+2022-12-04 22:33:10,407 INFO: Job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:33:00 CST], next run at: 2022-12-04 22:33:00 CST)" executed successfully
+2022-12-04 22:39:56,970 INFO: 登录成功
+2022-12-04 22:39:57,198 INFO: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-12-04 22:39:57,198 INFO: Added job "Buyer.buyItemInStock" to job store "default"
+2022-12-04 22:39:57,198 INFO: Scheduler started
+2022-12-04 22:40:00,000 INFO: Running job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:40:00 CST], next run at: 2022-12-04 22:40:00 CST)" (scheduled at 2022-12-04 22:40:00+08:00)
+2022-12-04 22:40:00,001 INFO: Removed job 35711c9cac004556b2537f85305803b5
+2022-12-04 22:40:00,212 INFO: 100043960941 满足下单条件，开始执行
+2022-12-04 22:40:05,529 INFO: 100043960941 满足下单条件，开始执行
+2022-12-04 22:40:10,596 INFO: 100043960941 满足下单条件，开始执行
+2022-12-04 22:40:15,474 INFO: Job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:40:00 CST], next run at: 2022-12-04 22:40:00 CST)" executed successfully
+2022-12-04 22:55:01,096 INFO: 登录成功
+2022-12-04 22:55:01,342 INFO: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-12-04 22:55:01,343 INFO: Added job "Buyer.buyItemInStock" to job store "default"
+2022-12-04 22:55:01,343 INFO: Scheduler started
+2022-12-04 22:55:01,343 WARNING: Run time of job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:40:00 CST], next run at: 2022-12-04 22:40:00 CST)" was missed by 0:15:01.343471
+2022-12-04 22:55:01,343 INFO: Removed job 5c9eff9da36e4e639b776326d80b152f
+2022-12-04 22:55:15,551 INFO: 登录成功
+2022-12-04 22:55:15,766 INFO: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2022-12-04 22:55:15,766 INFO: Added job "Buyer.buyItemInStock" to job store "default"
+2022-12-04 22:55:15,766 INFO: Scheduler started
+2022-12-04 22:56:00,001 INFO: Running job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:56:00 CST], next run at: 2022-12-04 22:56:00 CST)" (scheduled at 2022-12-04 22:56:00+08:00)
+2022-12-04 22:56:00,001 INFO: Removed job c16e1d8f2a80469fb0e711239b0eb54b
+2022-12-04 22:56:00,212 INFO: 100012700398 满足下单条件，开始执行
+2022-12-04 22:56:01,434 INFO: 下单成功
+2022-12-04 22:56:01,434 INFO: Job "Buyer.buyItemInStock (trigger: date[2022-12-04 22:56:00 CST], next run at: 2022-12-04 22:56:00 CST)" executed successfully

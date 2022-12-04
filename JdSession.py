@@ -320,6 +320,7 @@ class Session(object):
         itemDetail = self.itemDetails[skuId]
         isYushou = False
         if 'yushouUrl' in itemDetail:
+            
             self.getPreSallCheckoutPage(skuId, skuNum)
             isYushou = True
         else:
@@ -331,6 +332,7 @@ class Session(object):
             if ret:
                 return True
             else:
+                print("提交失败: ", msg)
                 time.sleep(interval)
         return False
 

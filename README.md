@@ -72,7 +72,7 @@ pip3 install -r requirements.txt
 ``` python 
 python JdBuyer.py
 # or
-python JdBuyer.py
+python3 JdBuyer.py
 ```
 
 ### 2.2 GUI 图形界面

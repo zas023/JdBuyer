@@ -1,6 +1,6 @@
 QRcode.png
 QRcode.jpg
-logs/
+log/
 cookies
 config.ini
 __pycache__/

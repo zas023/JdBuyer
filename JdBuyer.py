@@ -113,14 +113,14 @@ if __name__ == '__main__':
     # 购买数量
     skuNum = 1
     # 查询库存间隔
-    stockInterval = 1
+    stockInterval = 2
     # 监听库存后尝试下单次数
     submitRetry = 3
     # 下单尝试间隔(秒)
     submitInterval = 1
-    # 预约商品的购买时间，建议比开抢时间提前1分钟左右，否则会有延迟的
-    start_time = '2022-12-05 13:59:00'
-    end_time = '2022-12-05 14:02:00'
+    # 预约商品的购买时间，建议比开抢时间提前1秒左右，否则会有延迟的
+    start_time = '2022-12-11 20:30:00'
+    end_time = '2022-12-11 20:33:00'
 
     # start_time = '2022-12-04 22:56:00'
     # end_time = '2022-12-04 22:56:15'
@@ -128,11 +128,14 @@ if __name__ == '__main__':
     # 创建定时任务
     scheduler = BlockingScheduler()
     zone = zoneinfo.ZoneInfo("Asia/Shanghai")
-    start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S").replace(tzinfo=zone) 
-    end_time = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S").replace(tzinfo=zone) 
+    start_time = datetime.strptime(
+        start_time, "%Y-%m-%d %H:%M:%S"
+    ).replace(tzinfo=zone)
+    end_time = datetime.strptime(
+        end_time, "%Y-%m-%d %H:%M:%S"
+    ).replace(tzinfo=zone)
     print(f"程序预计开始时间：{start_time}, 预计结束时间：{end_time}")
     
-
     buyer = Buyer()
     # 登录京东账号
     buyer.loginByQrCode()

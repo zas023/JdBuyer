@@ -5,7 +5,10 @@ import logging.handlers
 import os
 from time import strftime
 
-LOG_FILENAME = strftime("logs\jd-buyer_%Y_%m_%d_%H.log")
+if not os.path.exists("log"):
+    os.mkdir("log")
+
+LOG_FILENAME = os.path.join("log", strftime("jd-buyer_%Y_%m_%d_%H.log"))
 
 logger = logging.getLogger()
 

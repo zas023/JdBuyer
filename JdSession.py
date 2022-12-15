@@ -6,6 +6,7 @@ import pickle
 import random
 import time
 import requests
+from pampy import match, _
 
 from lxml import etree
 
@@ -166,15 +167,23 @@ class Session(object):
         """ 解析商品信息
         :param skuId
         """
-        resp = self.getItemDetail(skuId).json()
-        shopId = resp['shopInfo']['shop']['shopId']
-        detail = dict(venderId=shopId)
-        if 'YuShouInfo' in resp:
-            detail['yushouUrl'] = resp['YuShouInfo']['url']
-        if 'miaoshaInfo' in resp:
-            detail['startTime'] = resp['miaoshaInfo']['startTime']
-            detail['endTime'] = resp['miaoshaInfo']['endTime']
-        self.itemDetails[skuId] = detail
+        try:
+            resp = self.getItemDetail(skuId).json()
+            # shopId = resp['shopInfo']['shop']['shopId']
+            shopId = match(resp, {_ :{"shopId": _}}, lambda key, value: value)
+            detail = dict(venderId=shopId)
+            # 预售商品
+            if 'YuShouInfo' in resp:
+                detail['yushouUrl'] = resp['YuShouInfo']['url']
+            # 秒杀商品
+            if 'miaoshaInfo' in resp:
+                detail['startTime'] = resp['miaoshaInfo']['startTime']
+                detail['endTime'] = resp['miaoshaInfo']['endTime']
+            self.itemDetails[skuId] = detail
+        except Exception as err:
+            print(err)
+            print("无法获取到购买信息，可能还没开抢，请等待几秒后再试")
+            # print("调试信息：data: ", resp)
 
     ############## 库存方法 #############
     def getItemStock(self, skuId, skuNum, areaId):
@@ -311,6 +320,7 @@ class Session(object):
         itemDetail = self.itemDetails[skuId]
         isYushou = False
         if 'yushouUrl' in itemDetail:
+            
             self.getPreSallCheckoutPage(skuId, skuNum)
             isYushou = True
         else:
@@ -322,6 +332,7 @@ class Session(object):
             if ret:
                 return True
             else:
+                print("提交失败: ", msg)
                 time.sleep(interval)
         return False
 

@@ -5,9 +5,11 @@ from config import global_config
 from log import logger
 from exception import JDException
 from JdSession import Session
-from timer import Timer
+# from timer import Timer
+from datetime import datetime
 from utils import (
     save_image,
+    convert_image,
     open_image,
     send_wechat
 )
@@ -39,8 +41,11 @@ class Buyer(object):
 
         fileName = 'QRcode.png'
         save_image(qrCode, fileName)
+        new_file_name = 'QRcode.jpg'
+        convert_image(fileName, new_file_name)
         logger.info('二维码获取成功，请打开京东APP扫描')
-        open_image(fileName)
+        
+        open_image(new_file_name)
 
         # get QR code ticket
         ticket = None
@@ -62,7 +67,10 @@ class Buyer(object):
         self.session.saveCookies()
 
     ############## 外部方法 #############
-    def buyItemInStock(self, skuId, areaId, skuNum=1, stockInterval=3, submitRetry=3, submitInterval=5, buyTime='2022-08-06 00:00:00'):
+    def buyItemInStock(
+            self, skuId, areaId, end_time: datetime,
+            skuNum=1, stockInterval=3, submitRetry=3, 
+            submitInterval=5):
         """根据库存自动下单商品
         :skuId 商品sku
         :areaId 下单区域id
@@ -72,11 +80,11 @@ class Buyer(object):
         :submitInterval 下单尝试间隔（单位秒）
         :buyTime 定时执行
         """
-        self.session.fetchItemDetail(skuId)
-        timer = Timer(buyTime)
-        timer.start()
+        
+        # timer = Timer(start_time)
+        # timer.start()
 
-        while True:
+        while time.time() < time.mktime(end_time.timetuple()):
             try:
                 if not self.session.getItemStock(skuId, skuNum, areaId):
                     logger.info('不满足下单条件，{0}s后进行下一次查询'.format(stockInterval))
@@ -94,23 +102,58 @@ class Buyer(object):
 
 
 if __name__ == '__main__':
-
-    # 商品sku
-    skuId = '100015253059'
+    
+    from apscheduler.schedulers.background import BlockingScheduler
+    import zoneinfo
+    # 商品id,直接从详情页获取
+    skuId = '100043960941'  # 准备抢4080公版
+    # skuId = '100012700398'
     # 区域id(可根据工程 area_id 目录查找)
-    areaId = '1_2901_55554_0'
+    areaId = '19_1601_3637'
     # 购买数量
     skuNum = 1
-    # 库存查询间隔(秒)
-    stockInterval = 3
+    # 查询库存间隔
+    stockInterval = 2
     # 监听库存后尝试下单次数
     submitRetry = 3
     # 下单尝试间隔(秒)
-    submitInterval = 5
-    # 程序开始执行时间(晚于当前时间立即执行，适用于定时抢购类)
-    buyTime = '2022-10-10 00:00:00'
+    submitInterval = 1
+    # 预约商品的购买时间，建议比开抢时间提前1秒左右，否则会有延迟的
+    start_time = '2022-12-11 20:30:00'
+    end_time = '2022-12-11 20:33:00'
 
-    buyer = Buyer()  # 初始化
+    # start_time = '2022-12-04 22:56:00'
+    # end_time = '2022-12-04 22:56:15'
+
+    # 创建定时任务
+    scheduler = BlockingScheduler()
+    zone = zoneinfo.ZoneInfo("Asia/Shanghai")
+    start_time = datetime.strptime(
+        start_time, "%Y-%m-%d %H:%M:%S"
+    ).replace(tzinfo=zone)
+    end_time = datetime.strptime(
+        end_time, "%Y-%m-%d %H:%M:%S"
+    ).replace(tzinfo=zone)
+    print(f"程序预计开始时间：{start_time}, 预计结束时间：{end_time}")
+    
+    buyer = Buyer()
+    # 登录京东账号
     buyer.loginByQrCode()
-    buyer.buyItemInStock(skuId, areaId, skuNum, stockInterval,
-                         submitRetry, submitInterval, buyTime)
+    # 获取商品信息
+    buyer.session.fetchItemDetail(skuId)
+
+    # 添加定时任务
+    scheduler.add_job(
+        buyer.buyItemInStock, 'date', run_date=start_time, 
+        args=[skuId, areaId, end_time,
+            skuNum, stockInterval, submitRetry, 
+            submitInterval]
+    )
+    # 准备执行
+    scheduler.start()
+
+    # buyer.buyItemInStock(
+    #     skuId, areaId, skuNum, stockInterval,
+    #     submitRetry, submitInterval,
+    #     start_time=start_time, end_time=end_time
+    # )

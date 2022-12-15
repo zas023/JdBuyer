@@ -6,6 +6,7 @@ import os
 import random
 import re
 from base64 import b64encode
+from PIL import Image
 
 import requests
 from Crypto.PublicKey import RSA
@@ -216,3 +217,29 @@ def get_random_useragent():
     :return: UserAgent字符串
     """
     return random.choice(USER_AGENTS)
+
+
+def convert_image(image_file: str, output_path):
+    """
+    转化一下图片格式，加上白色背景
+    Args:
+        image_file (str): _description_
+    """
+    raw_image = Image.open(image_file)
+    raw_image = raw_image.convert("RGB")
+    size = raw_image.size
+    print(raw_image.size)
+    # 创建一个白色背景图片，大小为原来图片的1.44倍,方便扫码
+    bg_image = Image.new(
+        raw_image.mode, 
+        size=(int(size[0] * 1.2), int(size[1] * 1.2)),
+        color='white'
+    )
+    bg_image.paste(raw_image, (int(size[0] * 0.1), int(size[1] * 0.1)))
+    # bg_image.show()
+    bg_image.save(output_path)
+
+
+if __name__ == "__main__":
+    convert_image("QRcode.png", "QRcode.jpg")
+

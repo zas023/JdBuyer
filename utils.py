@@ -8,8 +8,8 @@ import re
 from base64 import b64encode
 
 import requests
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
 
 from log import logger
 
